@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매장 재고 요청 · 경남지역</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --bg:#F5F4F0;
+    --surface:#FFFFFF;
+    --ink:#1C2422;
+    --sub:#6B6F6A;
+    --line:#DEDAD1;
+    --teal:#0E4C55;
+    --teal-dim:#E4EDEC;
+    --amber:#DE9A34;
+    --amber-dim:#FBEFDA;
+    --danger:#B4472F;
+    --khaki:#E9E4D3;
+    --khaki-line:#D6CEAF;
+    --radius:10px;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans KR', -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:80px;
+  }
+  ::selection{ background:var(--amber-dim); }
+  .tabular{ font-variant-numeric: tabular-nums; }
+
+  /* ---- Header ---- */
+  header.top{ background:var(--teal); color:#F3F1EA; padding:22px 24px 20px; }
+  header.top .wrap{ max-width:1180px; margin:0 auto; display:flex; align-items:flex-end; justify-content:space-between; gap:24px; flex-wrap:wrap;}
+  header.top h1{ font-size:22px; margin:0 0 4px; letter-spacing:-0.01em; font-weight:700;}
+  header.top p{ margin:0; font-size:13.5px; color:#BFD3D1; }
+  .store-badge-wrap{ display:flex; align-items:center; gap:10px; }
+  .store-badge-label{ font-size:12.5px; color:#BFD3D1; }
+  .store-badge{
+    font-size:15px; font-weight:700; padding:9px 16px;
+    border-radius:8px; border:1px solid #2C6B72; background:#0B3A41; color:#fff;
+    min-width:160px; text-align:center;
+  }
+  .store-badge.loading{ color:#BFD3D1; font-weight:400; font-size:13px; }
+
+  /* ---- Data status bar ---- */
+  .data-status-bar{
+    max-width:1180px; margin:14px auto 0; padding:0 24px;
+  }
+  .data-status-inner{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .ds-icon{ font-size:20px; }
+  .ds-text{ flex:1; min-width:0; }
+  .ds-title{ font-size:14px; font-weight:700; color:var(--ink); }
+  .ds-sub{ font-size:12px; color:var(--sub); margin-top:2px; }
+  .ds-dot{ width:8px; height:8px; border-radius:50%; background:var(--line); display:inline-block; margin-right:6px; }
+  .ds-dot.ok{ background:#1F7A4C; }
+  .ds-dot.loading{ background:var(--amber); }
+  .ds-dot.error{ background:var(--danger); }
+  .ds-badge{ display:inline-block; background:var(--teal-dim); color:var(--teal); font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; margin-left:8px; }
+  .reload-btn{
+    font-family:inherit; font-size:12.5px; font-weight:600; padding:8px 14px;
+    border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--sub);
+    cursor:pointer; white-space:nowrap;
+  }
+  .reload-btn:hover{ background:var(--bg); color:var(--ink); }
+
+  /* ---- Criteria panel ---- */
+  section.criteria{ max-width:1180px; margin:16px auto 0; padding:0 24px; }
+  .criteria-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .criteria-head h2{ font-size:14px; margin:0; }
+  .criteria-head .reset-btn{ background:none; border:1px solid var(--line); border-radius:7px; padding:6px 12px; font-size:12px; cursor:pointer; color:var(--sub); font-family:inherit;}
+  .crit-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .crit-card{ flex:1 1 190px; background:var(--khaki); border:1px solid var(--khaki-line); border-radius:8px; padding:12px 14px; }
+  .crit-title{ font-size:12px; font-weight:700; color:#5B5330; margin-bottom:9px; line-height:1.35; min-height:32px; }
+  .crit-controls{ display:flex; align-items:center; gap:6px; }
+  .crit-controls input[type=number]{
+    width:64px; padding:7px 8px; border-radius:6px; border:1px solid var(--khaki-line);
+    font-size:14px; font-family:inherit; background:#fff;
+  }
+  .crit-controls .crit-unit{ font-size:12.5px; color:#5B5330; }
+  .crit-controls select{
+    padding:7px 6px; border-radius:6px; border:1px solid var(--khaki-line); font-size:12.5px;
+    background:#fff; font-family:inherit; flex:1;
+  }
+  .crit-controls input:disabled, .crit-controls select:disabled{ opacity:.45; cursor:not-allowed; }
+  .crit-card.disabled{ opacity:.6; }
+  .crit-note{ font-size:10.5px; color:#8A7F4E; margin-top:6px; min-height:13px; }
+  .crit-hint{ font-size:11.5px; color:var(--sub); margin-top:8px; }
+
+  /* ---- Filter bar ---- */
+  section.filters{ position:sticky; top:0; z-index:20; background:var(--bg); border-bottom:1px solid var(--line); padding:14px 24px; margin-top:18px; }
+  .filters .wrap{ max-width:1180px; margin:0 auto; display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .filters input[type=text]{ flex:1 1 220px; padding:10px 14px; border-radius:8px; border:1px solid var(--line); font-size:14px; background:var(--surface); font-family:inherit; }
+  .filters select{ padding:10px 12px; border-radius:8px; border:1px solid var(--line); font-size:13.5px; background:var(--surface); font-family:inherit; color:var(--ink); }
+  .chk{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--sub); user-select:none; }
+  .result-count{ font-size:12.5px; color:var(--sub); margin-left:auto; }
+  .density-ctrl{ display:flex; align-items:center; gap:8px; }
+  .density-label{ font-size:12px; color:var(--sub); white-space:nowrap; }
+  .density-ctrl input[type=range]{
+    width:90px; accent-color:var(--teal); cursor:pointer;
+  }
+
+  /* ---- Multi-select (checkbox dropdown) ---- */
+  .multiselect{ position:relative; }
+  .ms-btn{
+    padding:10px 30px 10px 12px; border-radius:8px; border:1px solid var(--line);
+    font-size:13.5px; background:var(--surface) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%236B6F6A"/></svg>') no-repeat right 12px center;
+    font-family:inherit; color:var(--ink); cursor:pointer; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .ms-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .ms-btn.active-filter{ border-color:var(--teal); color:var(--teal); font-weight:700; }
+  .ms-panel{
+    display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:30;
+    background:var(--surface); border:1px solid var(--line); border-radius:8px;
+    box-shadow:0 8px 20px rgba(0,0,0,.1); min-width:220px; max-height:320px;
+    padding:6px; flex-direction:column;
+  }
+  .multiselect.open .ms-panel{ display:flex; }
+  .ms-search{
+    width:100%; padding:7px 9px; margin-bottom:6px; border:1px solid var(--line); border-radius:6px;
+    font-size:12.5px; font-family:inherit; box-sizing:border-box; flex:0 0 auto;
+  }
+  .ms-options{ overflow-y:auto; flex:1 1 auto; min-height:0; }
+  .ms-option{ display:flex; align-items:center; gap:8px; padding:7px 8px; font-size:13px; border-radius:6px; cursor:pointer; }
+  .ms-option:hover{ background:var(--bg); }
+  .ms-option input{ pointer-events:none; }
+  .ms-empty{ padding:10px 8px; font-size:12.5px; color:var(--sub); }
+  .ms-clear{ display:block; width:100%; text-align:left; padding:7px 8px; font-size:12px; color:var(--teal); background:none; border:none; border-top:1px solid var(--line); margin-top:4px; cursor:pointer; font-family:inherit; flex:0 0 auto; }
+
+  /* ---- List ---- */
+  main{ max-width:1180px; margin:0 auto; padding:20px 24px 40px; }
+  .empty-state{ text-align:center; padding:70px 20px; color:var(--sub); font-size:14px; line-height:1.8; }
+  .empty-state b{ color:var(--ink); }
+
+  .list{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
+  .list-head{
+    display:grid; grid-template-columns:110px 1fr 85px 85px 55px 70px 90px 90px 18px;
+    gap:var(--row-gap, 10px); padding:10px var(--row-pad-x, 18px); background:var(--bg); border-bottom:1px solid var(--line);
+    font-size:11px; font-weight:700; color:var(--sub);
+  }
+  .list-head span:not(:first-child):not(:nth-child(2)){ text-align:right; }
+  .list-head span.sortable{ cursor:pointer; user-select:none; }
+  .list-head span.sortable:hover{ color:var(--teal); }
+  .list-head span.sortable .arrow-ind{ display:inline-block; margin-left:2px; opacity:.4; font-size:9px; }
+  .list-head span.sortable.active{ color:var(--teal); }
+  .list-head span.sortable.active .arrow-ind{ opacity:1; }
+
+  .row{
+    display:grid; grid-template-columns:110px 1fr 85px 85px 55px 70px 90px 90px 18px;
+    gap:var(--row-gap, 10px); align-items:center; padding:var(--row-pad-y, 13px) var(--row-pad-x, 18px); cursor:pointer;
+    border-bottom:1px solid #F0EEE8; transition:background .1s ease;
+  }
+  .item:last-child .row{ border-bottom:none; }
+  .row:hover{ background:#FAFAF8; }
+  .row.open{ background:var(--teal-dim); cursor:default; }
+  .row .brand{ font-size:11.5px; font-weight:700; color:var(--teal); letter-spacing:.02em; line-height:1.35; }
+  .row .col-name{ min-width:0; }
+  .row .pname{ font-size:14px; font-weight:700; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cart-badge{
+    display:inline-block; background:var(--teal-dim); color:var(--teal); font-size:10.5px; font-weight:700;
+    padding:1px 7px; border-radius:10px; margin-left:6px; vertical-align:1px;
+  }
+  .row .style-color{ font-size:11.5px; color:var(--sub); margin-top:1px; }
+  .row .col-normal{ text-align:right; font-size:12px; color:var(--sub); }
+  .row .col-normal.has-discount{ text-decoration:line-through; }
+  .row .col-sell{ text-align:right; font-size:13.5px; font-weight:700; }
+  .row .col-disc{ text-align:right; font-size:12px; font-weight:500; color:var(--sub); }
+  .row .col-disc.has-discount{ font-weight:700; color:var(--danger); }
+  .row .col-stat{ text-align:right; font-size:12.5px; color:var(--ink); font-weight:700; }
+  .row .col-stat small{ display:block; font-size:10px; color:var(--sub); font-weight:400; }
+  .row .arrow{ text-align:center; color:var(--sub); font-size:13px; transition:transform .12s ease; }
+  .row.open .arrow{ transform:rotate(90deg); color:var(--teal); }
+
+  .panel{ padding:14px 18px 18px; border-top:1px dashed var(--line); background:#FCFCFA; }
+  .panel .hint{ font-size:12px; color:var(--sub); margin-bottom:12px; }
+  .my-store-ref{
+    background:var(--teal-dim); border:1px solid #C7DBDA; border-radius:8px;
+    padding:12px 14px; margin-bottom:14px;
+  }
+  .my-store-head{ font-size:13px; font-weight:600; margin-bottom:8px; color:var(--ink); }
+  .my-store-tag{
+    display:inline-block; background:var(--teal); color:#fff; font-size:10.5px; font-weight:700;
+    padding:2px 7px; border-radius:5px; margin-right:6px; vertical-align:1px;
+  }
+  .my-store-sales{ float:right; font-size:12px; color:var(--sub); font-weight:400; }
+  .my-store-sales b{ color:var(--ink); font-weight:700; }
+  .size-chip.ref-chip{ cursor:default; background:#fff; border-color:#C7DBDA; }
+  .size-chip.ref-chip:hover{ border-color:#C7DBDA; }
+  .size-chip.ref-chip.zero-chip{ background:#FBE9E3; border-color:#EFC1B0; }
+  .size-chip.ref-chip.zero-chip .sz{ color:#B4472F; }
+  .size-chip.ref-chip.zero-chip .qty{ color:#B4472F; }
+  .size-chip.dim-chip{ opacity:0.38; cursor:not-allowed; }
+  .size-chip.dim-chip:hover{ border-color:var(--line); }
+  .size-chip.shaded-chip{ opacity:0.45; cursor:not-allowed; background:var(--bg); border-color:var(--line); border-style:dashed; }
+  .size-chip.shaded-chip:hover{ border-color:var(--line); }
+  .size-chip.shaded-chip .qty{ color:var(--sub); }
+  .size-chip.zero-stock{ opacity:0.25; } /* 재고 자체가 없는 사이즈 — 더 연하게 */
+  .store-row{ display:flex; align-items:flex-start; gap:14px; padding:9px 0; border-bottom:1px solid #F0EEE8;}
+  .store-row:last-child{ border-bottom:none; }
+  .store-row .sname{ width:150px; flex:0 0 150px; font-size:13px; font-weight:600; padding-top:6px;}
+  .store-row .stotal{ display:block; font-size:11px; color:var(--sub); font-weight:400; margin-top:1px;}
+  .store-row .stotal i{ font-style:normal; color:#9A9488; }
+  .sizes{ display:flex; flex-wrap:wrap; gap:6px; clear:both; }
+  .size-chip{ position:relative; border:1px solid var(--line); background:var(--bg); border-radius:7px; padding:6px 10px; font-size:12.5px; cursor:pointer; line-height:1.2; text-align:center; min-width:50px; }
+  .size-chip .sz{ font-weight:700; display:block; }
+  .size-chip .qty{ display:block; font-size:11px; color:var(--sub); margin-top:1px; }
+  .size-chip:hover{ border-color:var(--teal); }
+  .size-chip.selected{ background:var(--amber); border-color:var(--amber); color:#3A2A0E; font-weight:700; box-shadow:0 0 0 2px rgba(222,154,52,.35); }
+  .size-chip.selected .qty{ color:#3A2A0E; }
+  .chip-check{
+    position:absolute; top:-7px; right:-7px; width:16px; height:16px; border-radius:50%;
+    background:var(--teal); color:#fff; font-size:10px; font-weight:700; line-height:16px;
+    box-shadow:0 0 0 2px #fff; text-align:center;
+  }
+  .close-panel{ margin-top:14px; background:none; border:1px solid var(--line); border-radius:7px; padding:7px 14px; font-size:12.5px; cursor:pointer; color:var(--sub); font-family:inherit;}
+
+  .more-btn{ display:block; margin:22px auto 0; padding:10px 22px; border-radius:8px; border:1px solid var(--line); background:var(--surface); font-size:13.5px; cursor:pointer; font-family:inherit;}
+
+  .cart-fab{ position:fixed; right:22px; bottom:22px; z-index:40; background:var(--teal); color:#fff; border:none; border-radius:30px; padding:14px 20px; font-size:14px; font-weight:700; cursor:pointer; box-shadow:0 6px 18px rgba(14,76,85,.35); display:flex; align-items:center; gap:8px; font-family:inherit; }
+  .cart-fab .badge{ background:var(--amber); color:#3A2A0E; border-radius:12px; padding:1px 8px; font-size:12.5px;}
+
+  .drawer-backdrop{ position:fixed; inset:0; background:rgba(20,24,22,.35); z-index:50; display:none;}
+  .drawer-backdrop.show{ display:block; }
+  .drawer{ position:fixed; top:0; right:-420px; width:400px; max-width:92vw; height:100%; background:var(--surface); z-index:51; transition:right .18s ease; display:flex; flex-direction:column; box-shadow:-8px 0 24px rgba(0,0,0,.12); }
+  .drawer.show{ right:0; }
+  .drawer-head{ padding:18px 20px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+  .drawer-head h2{ font-size:16px; margin:0; }
+  .drawer-head button{ background:none; border:none; font-size:20px; cursor:pointer; color:var(--sub); line-height:1;}
+  .drawer-body{ flex:1; overflow-y:auto; padding:8px 20px; }
+  .cart-empty{ text-align:center; color:var(--sub); font-size:13px; padding:60px 10px; }
+  .cart-group{ margin:14px 0; }
+  .cart-group .g-title{ font-size:12px; font-weight:700; color:var(--teal); margin-bottom:6px; display:flex; align-items:center; gap:6px;}
+  .cart-item{ display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #F0EEE8;}
+  .cart-item .ci-info{ flex:1; min-width:0; }
+  .cart-item .ci-name{ font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cart-item .ci-sub{ font-size:11.5px; color:var(--sub); }
+  .stepper{ display:flex; align-items:center; border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+  .stepper button{ background:var(--bg); border:none; width:24px; height:24px; cursor:pointer; font-size:13px; font-family:inherit;}
+  .stepper span{ width:26px; text-align:center; font-size:12.5px; font-weight:700; }
+  .ci-remove{ background:none; border:none; color:var(--sub); cursor:pointer; font-size:16px; padding:0 2px;}
+  .drawer-foot{ padding:16px 20px; border-top:1px solid var(--line); display:flex; gap:8px; }
+  .btn-primary{ flex:1; background:var(--teal); color:#fff; border:none; border-radius:8px; padding:12px; font-size:14.5px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-ghost{ background:none; border:1px solid var(--line); color:var(--sub); border-radius:8px; padding:12px 14px; font-size:13px; cursor:pointer; font-family:inherit;}
+
+  /* Toast */
+  .toast{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%); z-index:60;
+    background:#222; color:#fff; font-size:13.5px; font-weight:600; padding:12px 20px;
+    border-radius:10px; box-shadow:0 4px 16px rgba(0,0,0,.25);
+    opacity:0; transition:opacity .2s ease; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; }
+  .toast.error{ background:var(--danger); }
+  .toast.ok{ background:#1F7A4C; }
+
+  /* ---- 지역장 매장 선택 ---- */
+  .store-select-wrap{ display:flex; align-items:center; gap:10px; }
+  .store-select-label{ font-size:12.5px; color:#BFD3D1; white-space:nowrap; }
+  .store-select-tag{ font-size:10.5px; font-weight:700; background:#DE9A34; color:#3A2A0E; padding:2px 7px; border-radius:5px; white-space:nowrap; }
+  .store-selector{
+    font-size:14px; font-weight:700; padding:9px 14px;
+    border-radius:8px; border:1px solid #2C6B72; background:#0B3A41; color:#fff;
+    min-width:200px; cursor:pointer; font-family:inherit;
+    appearance:none; -webkit-appearance:none;
+    background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6"><path d="M0 0l5 6 5-6z" fill="%23BFD3D1"/></svg>');
+    background-repeat:no-repeat; background-position:right 12px center; padding-right:30px;
+  }
+  .store-selector option{ background:#1A4A50; color:#fff; }
+  .store-selector.selected{ border-color:var(--amber); }
+  .rm-hint{ font-size:11.5px; color:#BFD3D1; margin-top:6px; }
+
+  @media (max-width:900px){
+    .list-head, .row{ grid-template-columns:1fr 80px 55px 70px 18px; }
+    .list-head .h-brand, .list-head .h-normal, .list-head .h-other, .list-head .h-wh,
+    .row .brand, .row .col-normal, .row .col-stat.other, .row .col-stat.wh{ display:none; }
+  }
+  @media (max-width:680px){
+    .store-row{ flex-direction:column; }
+    .store-row .sname{ width:auto; }
+    header.top .wrap{ flex-direction:column; align-items:flex-start;}
+    .crit-card{ flex:1 1 45%; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div>
+      <h1>매장 재고 요청</h1>
+      <p>경남지역 매장 간 상품 확인 &amp; 점간이동 요청 리스트 작성</p>
+    </div>
+    <!-- 일반 점장 계정: 고정 매장 표시 -->
+    <div class="store-badge-wrap" id="storeBadgeWrap">
+      <span class="store-badge-label">내 매장 (요청 매장)</span>
+      <div class="store-badge loading" id="storeBadge">불러오는 중...</div>
+    </div>
+    <!-- 지역장 계정: 매장 선택 드롭다운 (데이터 로드 후 표시) -->
+    <div class="store-select-wrap" id="storeSelectWrap" style="display:none">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span class="store-select-label">조회 매장 선택</span>
+          <span class="store-select-tag">지역장</span>
+        </div>
+        <select class="store-selector" id="storeSelector">
+          <option value="">— 매장을 선택하세요 —</option>
+        </select>
+        <div class="rm-hint" id="rmHint">매장 선택 시 해당 매장 기준으로 재고를 조회합니다</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Data status bar (대신 업로드 UI) -->
+<div class="data-status-bar">
+  <div class="data-status-inner" id="dataStatusInner">
+    <span class="ds-icon">📦</span>
+    <div class="ds-text">
+      <div class="ds-title"><span class="ds-dot loading" id="dsDot"></span><span id="dsTitle">재고 데이터를 불러오는 중...</span></div>
+      <div class="ds-sub" id="dsSub">잠시 기다려 주세요</div>
+    </div>
+    <button type="button" class="reload-btn" id="reloadBtn">새로 고침</button>
+  </div>
+</div>
+
+<section class="criteria">
+  <div class="criteria-head">
+    <h2>요청 기준 (숫자를 입력한 항목만 적용됩니다)</h2>
+    <button class="reset-btn" id="resetCriteria">기준 초기화</button>
+  </div>
+  <div class="crit-row">
+    <div class="crit-card">
+      <div class="crit-title">① 경남지역 매장별 재고<br><span style="font-weight:400;color:#8A7F4E;font-size:10.5px;">(안전재고 초과분 기준)</span></div>
+      <div class="crit-controls">
+        <input type="number" id="c2val" min="0" value="1">
+        <span class="crit-unit">족</span>
+        <select id="c2op"><option value="전체">전체</option><option selected>이상</option><option>초과</option><option>이하</option><option>미만</option></select>
+      </div>
+      <div class="crit-note" id="c2note"></div>
+    </div>
+    <div class="crit-card">
+      <div class="crit-title">② 내 매장 재고(사이즈별)</div>
+      <div class="crit-controls">
+        <input type="number" id="c4val" min="0" value="3">
+        <span class="crit-unit">족</span>
+        <select id="c4op"><option value="전체">전체</option><option>이상</option><option>초과</option><option>이하</option><option selected>미만</option></select>
+      </div>
+      <div class="crit-note" id="c4note"></div>
+    </div>
+  </div>
+  <div class="crit-row" style="margin-top:10px;">
+    <div class="crit-card">
+      <div class="crit-title">④ 감가율</div>
+      <div class="crit-controls">
+        <input type="number" id="c5val" min="0" value="20">
+        <span class="crit-unit">%</span>
+        <select id="c5op"><option value="전체">전체</option><option selected>이하</option><option>미만</option><option>이상</option><option>초과</option></select>
+      </div>
+      <div class="crit-note" id="c5note"></div>
+    </div>
+    <div class="crit-card">
+      <div class="crit-title">⑤ 내 매장 판매수량</div>
+      <div class="crit-controls">
+        <input type="number" id="c6val" min="0" value="5">
+        <span class="crit-unit">족</span>
+        <select id="c6op"><option value="전체">전체</option><option selected>이상</option><option>초과</option><option>이하</option><option>미만</option></select>
+      </div>
+      <div class="crit-note" id="c6note"></div>
+    </div>
+    <div class="crit-card">
+      <div class="crit-title">⑥ 최종 입고일</div>
+      <div class="crit-controls">
+        <input type="number" id="c1val" min="0" value="45">
+        <span class="crit-unit">일</span>
+        <select id="c1op"><option value="전체">전체</option><option selected>이상</option><option>초과</option><option>이하</option><option>미만</option></select>
+      </div>
+      <div class="crit-note" id="c1note"></div>
+    </div>
+  </div>
+  <div class="crit-hint">값을 지우면 해당 기준은 적용되지 않습니다. 계산 기준일은 이 페이지를 여는 시점의 날짜입니다.</div>
+</section>
+
+<section class="filters">
+  <div class="wrap">
+    <input type="text" id="searchInput" placeholder="브랜드 / 상품명 / 스타일 검색">
+    <div class="multiselect" id="brandFilter">
+      <button type="button" class="ms-btn" data-placeholder="브랜드 전체" disabled>브랜드 전체</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="multiselect" id="catMajorFilter">
+      <button type="button" class="ms-btn" data-placeholder="대분류 전체" disabled>대분류 전체</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="multiselect" id="catMidFilter">
+      <button type="button" class="ms-btn" data-placeholder="중분류 전체" disabled>중분류 전체</button>
+      <div class="ms-panel"></div>
+    </div>
+    <div class="multiselect" id="catSubFilter">
+      <button type="button" class="ms-btn" data-placeholder="소분류 전체" disabled>소분류 전체</button>
+      <div class="ms-panel"></div>
+    </div>
+    <label class="chk"><input type="checkbox" id="onlyAvailable" checked> 요청 가능한 상품만</label>
+    <div class="density-ctrl">
+      <span class="density-label">간격</span>
+      <input type="range" id="densitySlider" min="0" max="100" value="35">
+    </div>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+</section>
+
+<main>
+  <div id="reqBannerWrap"></div>
+  <div id="gridWrap"></div>
+</main>
+
+<button class="cart-fab" id="cartFab">
+  요청 목록 <span class="badge" id="cartBadge">0</span>
+</button>
+
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h2>점간이동 요청 목록</h2>
+    <button id="drawerClose">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <button class="btn-ghost" id="clearCart">전체 삭제</button>
+    <button class="btn-primary" id="submitBtn" disabled>요청 제출</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- DEMO DATA (Apps Script 외부 환경용 미리보기) ----
+// 지역장 모드: 모든 매장 데이터가 rows에 포함, 클라이언트에서 매장 선택으로 분리
+const DEMO_DATA = {
+  ok: true,
+  session: { store: "지역장", email: "demo@abc-mart.co.kr", isRegionalManager: true },
+  safetyStock: 3,
+  asOf: "2026-09-16 09:00",
+  myStoreRows: [], // 지역장은 서버에서 빈 배열 반환
+  warehouseRows: [
+    {style:"CM878MC1",color:"BLACK",size:"250",qty:45},
+    {style:"CM878MC1",color:"BLACK",size:"255",qty:12},
+    {style:"CM878MC1",color:"BLACK",size:"260",qty:88},
+    {style:"CM878MC1",color:"BLACK",size:"265",qty:5},
+    {style:"GS920LB2",color:"BEIGE",size:"230",qty:20},
+    {style:"GS920LB2",color:"BEIGE",size:"235",qty:60},
+  ],
+  rows: [
+    // ── ST 김해이마트점 ──────────────────────────────────
+    {store:"ST 김해이마트점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"250",stock:2,available:-1,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:8},
+    {store:"ST 김해이마트점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"255",stock:5,available:2,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:8},
+    {store:"ST 김해이마트점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"260",stock:1,available:-2,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:8},
+    {store:"ST 김해이마트점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"265",stock:4,available:1,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:8},
+    {store:"ST 김해이마트점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"230",stock:3,available:0,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:5},
+    {store:"ST 김해이마트점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"235",stock:6,available:3,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:5},
+    {store:"ST 김해이마트점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"240",stock:2,available:-1,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:5},
+    // ── GS 창원중앙점 ────────────────────────────────────
+    {store:"GS 창원중앙점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"250",stock:4,available:1,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:12},
+    {store:"GS 창원중앙점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"255",stock:6,available:3,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:12},
+    {store:"GS 창원중앙점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"260",stock:2,available:0,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:12},
+    {store:"GS 창원중앙점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"230",stock:2,available:0,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:8},
+    {store:"GS 창원중앙점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"235",stock:5,available:2,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:8},
+    {store:"GS 창원중앙점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"240",stock:1,available:0,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:8},
+    // ── NT 마산롯데점 ────────────────────────────────────
+    {store:"NT 마산롯데점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"250",stock:8,available:5,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:9},
+    {store:"NT 마산롯데점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"260",stock:2,available:0,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:9},
+    {store:"NT 마산롯데점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"270",stock:5,available:2,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:9},
+    {store:"NT 마산롯데점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"235",stock:4,available:1,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:3},
+    {store:"NT 마산롯데점",brand:"GUCCI",product:"GS920LB2 베이지",style:"GS920LB2",color:"BEIGE",size:"245",stock:3,available:0,normalPrice:145000,sellPrice:101500,discountRate:30,lastIn:"2026-06-01",catMajor:"신발",catMid:"LADIESSHOES",catSub:"플랫",salesQty:3},
+    // ── GS 진주갤러리아점 ────────────────────────────────
+    {store:"GS 진주갤러리아점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"255",stock:1,available:0,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:6},
+    {store:"GS 진주갤러리아점",brand:"CONVERSE",product:"척테일러 올스타",style:"CM878MC1",color:"BLACK",size:"265",stock:7,available:4,normalPrice:89000,sellPrice:71200,discountRate:20,lastIn:"2026-07-10",catMajor:"신발",catMid:"SPORTS SHOES",catSub:"스니커즈",salesQty:6},
+  ]
+};
+
+(function(){
+  "use strict";
+
+  const SEP = "␟";
+  const key2 = (a,b)=> (a||"").trim()+SEP+(b||"").trim();
+  const key3 = (a,b,c)=> (a||"").trim()+SEP+(b||"").trim()+SEP+(c||"").trim();
+
+  const MID_TO_MAJOR = {
+    "BAG":"용품","BUSINESS SHOES":"신발","DESSERT":"FNB","INSOLE":"용품","KIDS":"신발",
+    "KIDS WEAR":"의류","KNIT":"의류","LADIESSHOES":"신발","LEATHER CASUAL":"신발",
+    "OTHER PRODUCTS":"용품","OTS":"용품","PRODUCTS EXCEPT SHOES":"용품","SANDAL":"신발",
+    "SHOE LACE":"용품","SHOES CARE":"용품","SOCKS":"용품","SPORTS SHOES":"신발","WOVEN":"의류"
+  };
+
+  // ---- STATE ----
+  const state = {
+    dataLoaded: false,
+    myStore: "",
+    safetyStock: 0,
+    asOf: "",
+    products: new Map(),       // key2(style,color) → product object
+    myStock: new Map(),        // key2(style,color) → Map<size, qty>
+    myAvail: new Map(),        // key2(style,color) → Map<size, available>
+    warehouseMap: new Map(),   // key3(style,color,size) → qty
+    warehouseHasData: false,
+    stores: new Set(),
+    brands: new Set(),
+    catMajors: new Set(), catMids: new Set(), catSubs: new Set(),
+    majorToMids: new Map(), midToSubs: new Map(),
+    selBrands: new Set(), selCatMajors: new Set(), selCatMids: new Set(), selCatSubs: new Set(),
+    cart: new Map(),           // cartKey → {supplyStore, brand, product, style, color, size, qty, p}
+    isRegionalManager: false,
+    allRows: [],               // 지역장 전용: 전 매장 rows 원본
+    selectedViewStore: "",     // 지역장이 선택한 조회 기준 매장
+    visibleCount: 60,
+    openKey: null,
+    sortKey: null, sortDir: "desc"
+  };
+
+  function num(v){ if(v==null||v==="") return 0; const n = Number(v); return isNaN(n)?0:n; }
+  function fmtWon(n){ return Math.round(n).toLocaleString("ko-KR")+"원"; }
+  function fmtPct(n){ return Math.round(n*100)+"%" ; }
+
+  function sizeCompare(a,b){
+    const na=parseInt(a,10),nb=parseInt(b,10);
+    const aNum=!isNaN(na)&&/^\d+$/.test(String(a).trim());
+    const bNum=!isNaN(nb)&&/^\d+$/.test(String(b).trim());
+    if(aNum&&bNum) return na-nb;
+    if(aNum&&!bNum) return -1;
+    if(!aNum&&bNum) return 1;
+    return String(a).localeCompare(String(b),"ko");
+  }
+
+  function compareOp(value,op,threshold){
+    switch(op){
+      case "이상": return value>=threshold;
+      case "초과": return value>threshold;
+      case "이하": return value<=threshold;
+      case "미만": return value<threshold;
+      default: return true;
+    }
+  }
+
+  // ---- TOAST ----
+  let toastTimer=null;
+  function showToast(msg,type=""){
+    const el=document.getElementById("toast");
+    el.textContent=msg; el.className="toast"+(type?" "+type:"")+" show";
+    if(toastTimer) clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>{ el.className="toast"+(type?" "+type:""); },2800);
+  }
+
+  // ---- DATA STATUS UI ----
+  function setDataStatus(state2, title, sub){
+    const dot=document.getElementById("dsDot");
+    const titleEl=document.getElementById("dsTitle");
+    const subEl=document.getElementById("dsSub");
+    dot.className="ds-dot "+state2;
+    titleEl.textContent=title;
+    subEl.textContent=sub;
+  }
+
+  // ---- LOAD DATA FROM GOOGLE APPS SCRIPT ----
+  function loadData(){
+    setDataStatus("loading","재고 데이터를 불러오는 중...","구글시트에서 데이터를 가져오고 있습니다");
+    document.getElementById("storeBadge").className="store-badge loading";
+    document.getElementById("storeBadge").textContent="불러오는 중...";
+    state.dataLoaded=false;
+
+    if(typeof google==="undefined"||!google.script||!google.script.run){
+      // 개발/테스트 환경: 데모 데이터로 UI 확인
+      setTimeout(()=> onDataLoaded(DEMO_DATA),700);
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(onDataLoaded)
+      .withFailureHandler(onDataError)
+      .getAvailableStock();
+  }
+
+  function onDataError(err){
+    setDataStatus("error","데이터 로드 실패","오류: "+(err&&err.message||String(err)));
+    document.getElementById("storeBadge").textContent="오류";
+    document.getElementById("storeBadge").className="store-badge loading";
+  }
+
+  function onDataLoaded(result){
+    if(!result||!result.ok){
+      const reason=result&&result.reason||"알 수 없는 오류";
+      setDataStatus("error","데이터 로드 실패",reason);
+      document.getElementById("storeBadge").textContent="오류";
+      document.getElementById("storeBadge").className="store-badge loading";
+      return;
+    }
+
+    // Session info
+    state.myStore=(result.session&&result.session.store)||"";
+    state.safetyStock=result.safetyStock||0;
+    state.asOf=result.asOf||"";
+
+    // Header store badge
+    const badge=document.getElementById("storeBadge");
+    badge.textContent=state.myStore||"(매장 없음)";
+    badge.className="store-badge";
+
+    // Build warehouseMap from warehouseRows
+    state.warehouseMap.clear();
+    state.warehouseHasData=false;
+    if(result.warehouseRows&&result.warehouseRows.length){
+      for(const r of result.warehouseRows){
+        const k=key3(String(r.style||"").trim(), String(r.color||"").trim(), String(r.size||"").trim());
+        state.warehouseMap.set(k,(state.warehouseMap.get(k)||0)+Number(r.qty||0));
+      }
+      state.warehouseHasData=state.warehouseMap.size>0;
+    }
+
+    // (창고재고 c3 기준 제거됨)
+
+    // ── 지역장 여부 감지 ──────────────────────────────────
+    state.isRegionalManager=!!(result.session&&result.session.isRegionalManager);
+    if(state.isRegionalManager){
+      state.allRows=result.rows||[];
+      // 헤더 UI 전환
+      document.getElementById("storeBadgeWrap").style.display="none";
+      document.getElementById("storeSelectWrap").style.display="";
+      // 매장 선택 드롭다운 구성
+      const storeNames=[...new Set(state.allRows.map(r=>String(r.store||"").trim()).filter(s=>s))].sort((a,b)=>a.localeCompare(b,"ko"));
+      const sel=document.getElementById("storeSelector");
+      sel.innerHTML='<option value="">— 매장을 선택하세요 —</option>'+storeNames.map(s=>"<option value='"+escHtml(s)+"'>"+escHtml(s)+"</option>").join("");
+      // 데이터 로드 완료 표시 (매장 선택 전까지는 목록 비어있음)
+      const cnt=storeNames.length;
+      const rmAsOf=state.asOf?" · 기준: "+state.asOf:"";
+      setDataStatus("ok",cnt+"개 매장 데이터 로드 완료"+rmAsOf,"매장을 선택하면 해당 매장 기준으로 재고를 조회합니다 (안전재고 "+state.safetyStock+"족)");
+      document.getElementById("dsDot").className="ds-dot ok";
+      state.dataLoaded=true;
+      render(); // 매장 미선택 안내 표시
+      return;
+    }
+
+    // 일반 점장: 기존 처리 (applyInventoryRows_ 내부에서 상태 갱신 및 render 호출)
+    applyInventoryRows_(result.myStoreRows||[], result.rows||[]);
+  }
+
+  // ── 재고 데이터 적용 (점장/지역장 공용) ──────────────────
+  function applyInventoryRows_(myStoreRows, otherRows){
+    // Build myStock + myAvail from myStoreRows
+    state.myStock.clear();
+    state.myAvail.clear();
+    for(const r of myStoreRows){
+      const k=key2(r.style||"",r.color||"");
+      const sz=String(r.size||"").trim();
+      if(!sz) continue;
+      if(!state.myStock.has(k)) state.myStock.set(k,new Map());
+      state.myStock.get(k).set(sz,(state.myStock.get(k).get(sz)||0)+num(r.stock));
+      if(!state.myAvail.has(k)) state.myAvail.set(k,new Map());
+      state.myAvail.get(k).set(sz,(state.myAvail.get(k).get(sz)||0)+num(r.available));
+    }
+
+    // Build products from otherRows
+    state.products.clear();
+    state.stores.clear();
+    state.brands.clear();
+    state.catMajors.clear(); state.catMids.clear(); state.catSubs.clear();
+    state.majorToMids.clear(); state.midToSubs.clear();
+
+    const today0=new Date(); today0.setHours(0,0,0,0);
+
+    for(const r of otherRows){
+      const style=String(r.style||"").trim();
+      const color=String(r.color||"").trim();
+      const size=String(r.size||"").trim();
+      const store=String(r.store||"").trim();
+      if(!style) continue;
+
+      const k=key2(style,color);
+      let p=state.products.get(k);
+      if(!p){
+        const discRate=num(r.discountRate)/100; // Code.gs returns integer %
+        const normalP=num(r.normalPrice);
+        const sellP=num(r.sellPrice)||normalP;
+
+        // Category: derive from catMid using MID_TO_MAJOR
+        const catMid=String(r.catMid||"").trim();
+          const catSub=String(r.catSub||"").trim();
+          const catMajor=String(r.catMajor||"").trim()||MID_TO_MAJOR[catMid]||"";
+
+          // lastInDate & daysSinceIn
+          let lastInDate=null, daysSinceIn=null;
+          if(r.lastIn){
+            const d=new Date(r.lastIn);
+            if(!isNaN(d.getTime())){
+              lastInDate=d;
+              const d0=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+              daysSinceIn=Math.floor((today0-d0)/86400000);
+            }
+          }
+
+          p={
+            brand:String(r.brand||"").trim(),
+            product:String(r.product||r.productName||"").trim(),
+            style,color,
+            normalPrice:normalP,
+            sellPrice:sellP,
+            discountRate:discRate,
+            qty:r.salesQty!=null?num(r.salesQty):null,
+            catMajor,catMid,catSub,
+            lastInDate,daysSinceIn,
+            viewCount:null,
+            storeMap:new Map(),  // store → Map<size, available> (필터/가용수량용)
+            stockMap:new Map(),  // store → Map<size, stock> (전체표시용)
+            allSizes:new Set()
+          };
+          state.products.set(k,p);
+
+          // Category sets
+          if(catMajor) state.catMajors.add(catMajor);
+          if(catMid) state.catMids.add(catMid);
+          if(catSub) state.catSubs.add(catSub);
+          if(catMajor&&catMid){
+            if(!state.majorToMids.has(catMajor)) state.majorToMids.set(catMajor,new Set());
+            state.majorToMids.get(catMajor).add(catMid);
+          }
+          if(catMid&&catSub){
+            if(!state.midToSubs.has(catMid)) state.midToSubs.set(catMid,new Set());
+            state.midToSubs.get(catMid).add(catSub);
+          }
+        }
+
+        if(p.brand) state.brands.add(p.brand);
+        if(store) state.stores.add(store);
+        if(size) p.allSizes.add(size);
+
+        // Stock by store/size (전체 재고 — 표시용)
+        const stock=num(r.stock);
+        const avail=num(r.available);
+        if(stock>0&&store&&size){
+          if(!p.stockMap.has(store)) p.stockMap.set(store,new Map());
+          p.stockMap.get(store).set(size,(p.stockMap.get(store).get(size)||0)+stock);
+        }
+        // Available stock (가용 — 필터/요청용)
+        if(avail>0&&store&&size){
+          if(!p.storeMap.has(store)) p.storeMap.set(store,new Map());
+          p.storeMap.get(store).set(size,(p.storeMap.get(store).get(size)||0)+avail);
+        }
+      }
+
+    state.dataLoaded=true;
+    const cnt=state.products.size;
+    const asOfStr=state.asOf ? " · 기준: "+state.asOf : "";
+    setDataStatus("ok",
+      cnt.toLocaleString("ko-KR")+"개 상품 · "+state.stores.size+"개 매장"+asOfStr,
+      "안전재고("+state.safetyStock+"족) 초과분 기준 · "+state.myStore+" 이외 매장 재고"
+    );
+    document.getElementById("dsDot").className="ds-dot ok";
+
+    refreshBrandSelect();
+    refreshCategorySelects();
+    render();
+    startPollTimer(); // 데이터 로드 후 자동 갱신 시작
+  }
+
+  // ---- 60초 자동 가용재고 갱신 ----
+  let _pollTimer=null;
+  function startPollTimer(){
+    if(_pollTimer) clearInterval(_pollTimer);
+    _pollTimer=setInterval(pollAvailable, 60000);
+  }
+  function pollAvailable(){
+    if(!state.dataLoaded) return;
+    if(typeof google==="undefined"||!google.script||!google.script.run) return;
+    google.script.run
+      .withSuccessHandler(res=>{
+        if(!res||!res.ok||!res.snap) return;
+        patchAvailableFromSnap(res.snap);
+        render();
+        // 상태바 갱신 시각 표시
+        const t=new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"});
+        const sub=document.getElementById("dsSub");
+        if(sub) sub.textContent=(sub.textContent.split("·")[0].trim())+" · 재고 갱신: "+t;
+      })
+      .withFailureHandler(()=>{}) // 폴링 실패는 조용히 무시
+      .getAvailableSnapshot();
+  }
+  function patchAvailableFromSnap(snap){
+    // snap 키 = "매장명␟스타일␟컬러␟사이즈" (Code.gs ledgerKey_ 형식)
+    // → state.products의 storeMap available 값만 업데이트
+    for(const [snapKey, avail] of Object.entries(snap)){
+      const parts=snapKey.split(SEP);
+      if(parts.length!==4) continue;
+      const [store,style,color,size]=parts;
+      const k=key2(style,color);
+      const p=state.products.get(k);
+      if(!p) continue;
+      if(p.storeMap.has(store)){
+        const szMap=p.storeMap.get(store);
+        if(szMap.has(size)) szMap.set(size, avail);
+        // avail이 양수로 새로 생긴 경우 (다른 예약이 취소됨)
+        else if(avail>0) szMap.set(size, avail);
+      } else if(avail>0 && p.stockMap.has(store)){
+        // 이전에 storeMap에 없었지만 취소로 가용이 생긴 경우
+        const szMap=new Map();
+        szMap.set(size, avail);
+        p.storeMap.set(store, szMap);
+      }
+    }
+  }
+
+  // ---- CRITERIA ----
+  function getCriteria(){
+    function getOne(valId,opId){
+      const op=document.getElementById(opId).value;
+      if(op==="전체") return null; // 전체 선택 시 해당 기준 무효화
+      const v=document.getElementById(valId).value.trim();
+      if(v===""||isNaN(Number(v))) return null;
+      return {val:Number(v), op};
+    }
+    return {
+      c1:getOne("c1val","c1op"), // 최종입고일
+      c2:getOne("c2val","c2op"), // 경남지역 재고
+      c4:getOne("c4val","c4op"), // 내 매장 재고
+      c5:getOne("c5val","c5op"), // 감가율
+      c6:getOne("c6val","c6op"), // 판매수량
+    };
+  }
+
+  // Returns true if the product+store+size combo passes all criteria
+  function passesProductCriteria(p, supplyStore, size, crit){
+    // c1: 최종입고일
+    if(crit.c1!==null && p.daysSinceIn!==null){
+      if(!compareOp(p.daysSinceIn, crit.c1.op, crit.c1.val)) return false;
+    }
+    // c2: 경남지역 재고 (available at supplyStore for this size)
+    if(crit.c2!==null){
+      const avail=p.storeMap.has(supplyStore) ? (p.storeMap.get(supplyStore).get(size)||0) : 0;
+      if(!compareOp(avail, crit.c2.op, crit.c2.val)) return false;
+    }
+    // c4: 내 매장 재고 (this size)
+    if(crit.c4!==null){
+      const myStockMap=state.myStock.get(key2(p.style,p.color));
+      const myQty=myStockMap ? (myStockMap.get(size)||0) : 0;
+      if(!compareOp(myQty, crit.c4.op, crit.c4.val)) return false;
+    }
+    // c5: 감가율
+    if(crit.c5!==null){
+      if(!compareOp(Math.round(p.discountRate*100), crit.c5.op, crit.c5.val)) return false;
+    }
+    // c6: 판매수량
+    if(crit.c6!==null && p.qty!==null){
+      if(!compareOp(p.qty, crit.c6.op, crit.c6.val)) return false;
+    }
+    return true;
+  }
+
+  // Check if product has ANY passing size across any supply store
+  function productHasAvailable(p, crit){
+    for(const [store, sizeMap] of p.storeMap){
+      for(const [size, avail] of sizeMap){
+        if(avail<=0) continue;
+        if(passesProductCriteria(p, store, size, crit)) return true;
+      }
+    }
+    return false;
+  }
+
+  // ---- MULTISELECT ----
+  const MS_CONFIG=[
+    {id:"brandFilter", sourceKey:"brands", selKey:"selBrands", placeholder:"브랜드 전체"},
+    {id:"catMajorFilter", sourceKey:"catMajors", selKey:"selCatMajors", placeholder:"대분류 전체"},
+    {id:"catMidFilter", sourceKey:"catMids", selKey:"selCatMids", placeholder:"중분류 전체"},
+    {id:"catSubFilter", sourceKey:"catSubs", selKey:"selCatSubs", placeholder:"소분류 전체"}
+  ];
+  const msSearch={};
+
+  function getOptionsFor(cfg){
+    if(cfg.id==="catMidFilter"){
+      const majors=state.selCatMajors;
+      if(majors.size===0) return Array.from(state.catMids).sort((a,b)=>a.localeCompare(b,"ko"));
+      const result=new Set();
+      for(const maj of majors){
+        const mids=state.majorToMids.get(maj)||new Set();
+        for(const m of mids) result.add(m);
+      }
+      return Array.from(result).sort((a,b)=>a.localeCompare(b,"ko"));
+    }
+    if(cfg.id==="catSubFilter"){
+      const mids=state.selCatMids;
+      if(mids.size===0){
+        const majors=state.selCatMajors;
+        if(majors.size===0) return Array.from(state.catSubs).sort((a,b)=>a.localeCompare(b,"ko"));
+        const result=new Set();
+        for(const maj of majors){
+          const midSet=state.majorToMids.get(maj)||new Set();
+          for(const mid of midSet){
+            const subs=state.midToSubs.get(mid)||new Set();
+            for(const s of subs) result.add(s);
+          }
+        }
+        return Array.from(result).sort((a,b)=>a.localeCompare(b,"ko"));
+      }
+      const result=new Set();
+      for(const mid of mids){
+        const subs=state.midToSubs.get(mid)||new Set();
+        for(const s of subs) result.add(s);
+      }
+      return Array.from(result).sort((a,b)=>a.localeCompare(b,"ko"));
+    }
+    return Array.from(state[cfg.sourceKey]).sort((a,b)=>a.localeCompare(b,"ko"));
+  }
+
+  function cascadeCategory(changedId){
+    if(changedId==="catMajorFilter"){
+      const validMids=new Set();
+      for(const m of state.selCatMajors){ const mids=state.majorToMids.get(m)||new Set(); for(const mid of mids) validMids.add(mid); }
+      for(const mid of [...state.selCatMids]) if(!validMids.has(mid)) state.selCatMids.delete(mid);
+      const validSubs=new Set();
+      for(const mid of state.selCatMids){ const subs=state.midToSubs.get(mid)||new Set(); for(const s of subs) validSubs.add(s); }
+      for(const s of [...state.selCatSubs]) if(!validSubs.has(s)) state.selCatSubs.delete(s);
+      refreshMsBtn(MS_CONFIG.find(c=>c.id==="catMidFilter"));
+      refreshMsBtn(MS_CONFIG.find(c=>c.id==="catSubFilter"));
+    }
+    if(changedId==="catMidFilter"){
+      const validSubs=new Set();
+      for(const mid of state.selCatMids){ const subs=state.midToSubs.get(mid)||new Set(); for(const s of subs) validSubs.add(s); }
+      for(const s of [...state.selCatSubs]) if(!validSubs.has(s)) state.selCatSubs.delete(s);
+      refreshMsBtn(MS_CONFIG.find(c=>c.id==="catSubFilter"));
+    }
+  }
+
+  function buildMsPanel(cfg){
+    const wrap=document.getElementById(cfg.id);
+    const panel=wrap.querySelector(".ms-panel");
+    const search=msSearch[cfg.id]||"";
+    const sel=state[cfg.selKey];
+    const allOpts=getOptionsFor(cfg);
+    const opts=allOpts.filter(o=>!search||o.toLowerCase().includes(search.toLowerCase()));
+    panel.innerHTML="";
+
+    const inp=document.createElement("input");
+    inp.className="ms-search"; inp.type="text"; inp.placeholder="검색..."; inp.value=search;
+    inp.addEventListener("input",e=>{ msSearch[cfg.id]=e.target.value; buildMsPanel(cfg); });
+    panel.appendChild(inp);
+
+    const div=document.createElement("div"); div.className="ms-options"; panel.appendChild(div);
+
+    if(opts.length===0){
+      const e=document.createElement("div"); e.className="ms-empty"; e.textContent="항목 없음"; div.appendChild(e);
+    }else{
+      // ── 전체 선택 행 ──
+      const allRow=document.createElement("label"); allRow.className="ms-option ms-select-all";
+      const allCb=document.createElement("input"); allCb.type="checkbox";
+      const checkedCount=opts.filter(o=>sel.has(o)).length;
+      allCb.checked=checkedCount===opts.length;
+      allCb.indeterminate=checkedCount>0&&checkedCount<opts.length;
+      allCb.addEventListener("change",()=>{
+        if(allCb.checked) opts.forEach(o=>sel.add(o)); else opts.forEach(o=>sel.delete(o));
+        cascadeCategory(cfg.id);
+        buildMsPanel(cfg); refreshMsBtn(cfg); render();
+      });
+      const allSpan=document.createElement("span"); allSpan.textContent="전체 선택";
+      allSpan.style.fontWeight="600";
+      allRow.appendChild(allCb); allRow.appendChild(allSpan);
+      div.appendChild(allRow);
+
+      // ── 구분선 ──
+      const hr=document.createElement("div"); hr.style.cssText="height:1px;background:var(--line);margin:3px 0 4px;"; div.appendChild(hr);
+
+      // ── 개별 항목 ──
+      for(const opt of opts){
+        const row=document.createElement("label"); row.className="ms-option";
+        const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=sel.has(opt);
+        cb.addEventListener("change",()=>{
+          if(cb.checked) sel.add(opt); else sel.delete(opt);
+          cascadeCategory(cfg.id);
+          refreshMsBtn(cfg);
+          render();
+          // 전체선택 체크박스 상태 업데이트
+          const nc=opts.filter(o=>sel.has(o)).length;
+          allCb.checked=nc===opts.length; allCb.indeterminate=nc>0&&nc<opts.length;
+        });
+        const span=document.createElement("span"); span.textContent=opt;
+        row.appendChild(cb); row.appendChild(span);
+        div.appendChild(row);
+      }
+    }
+
+    const clr=document.createElement("button"); clr.className="ms-clear"; clr.textContent="선택 초기화";
+    clr.addEventListener("click",()=>{
+      sel.clear(); msSearch[cfg.id]=""; buildMsPanel(cfg); refreshMsBtn(cfg);
+      if(cfg.id==="catMajorFilter"){ state.selCatMids.clear(); state.selCatSubs.clear(); refreshMsBtn(MS_CONFIG.find(c=>c.id==="catMidFilter")); refreshMsBtn(MS_CONFIG.find(c=>c.id==="catSubFilter")); }
+      if(cfg.id==="catMidFilter"){ state.selCatSubs.clear(); refreshMsBtn(MS_CONFIG.find(c=>c.id==="catSubFilter")); }
+      render();
+    });
+    panel.appendChild(clr);
+    inp.focus();
+  }
+
+  function refreshMsBtn(cfg){
+    const wrap=document.getElementById(cfg.id);
+    const btn=wrap.querySelector(".ms-btn");
+    const sel=state[cfg.selKey];
+    const hasData=state.dataLoaded&&state[cfg.sourceKey].size>0;
+    btn.disabled=!hasData;
+    // 카테고리 필터: 데이터 로드 후 항목이 없으면 숨김 (disabled 상태로 두지 않음)
+    if(cfg.id!=="brandFilter"){
+      wrap.style.display=(state.dataLoaded&&!hasData)?"none":"";
+    }
+    if(sel.size===0){
+      btn.textContent=cfg.placeholder;
+      btn.classList.remove("active-filter");
+    }else if(sel.size===1){
+      btn.textContent=[...sel][0];
+      btn.classList.add("active-filter");
+    }else{
+      btn.textContent=cfg.placeholder.replace(" 전체","")+" "+sel.size+"개 선택";
+      btn.classList.add("active-filter");
+    }
+  }
+
+  function refreshBrandSelect(){
+    const cfg=MS_CONFIG.find(c=>c.id==="brandFilter");
+    refreshMsBtn(cfg);
+  }
+  function refreshCategorySelects(){
+    for(const cfg of MS_CONFIG.filter(c=>c.id!=="brandFilter")) refreshMsBtn(cfg);
+  }
+
+  // Attach open/close behavior
+  MS_CONFIG.forEach(cfg=>{
+    const wrap=document.getElementById(cfg.id);
+    const btn=wrap.querySelector(".ms-btn");
+    btn.addEventListener("click",e=>{
+      e.stopPropagation();
+      const isOpen=wrap.classList.contains("open");
+      document.querySelectorAll(".multiselect.open").forEach(el=>el.classList.remove("open"));
+      if(!isOpen){ wrap.classList.add("open"); buildMsPanel(cfg); }
+    });
+  });
+  document.addEventListener("click",()=>{
+    document.querySelectorAll(".multiselect.open").forEach(el=>el.classList.remove("open"));
+  });
+
+  // ---- DENSITY SLIDER ----
+  const densitySlider=document.getElementById("densitySlider");
+  function applyDensity(v){
+    const padY=Math.round(6+v*0.16);
+    const padX=Math.round(12+v*0.08);
+    const gap=Math.round(6+v*0.06);
+    document.documentElement.style.setProperty("--row-pad-y",padY+"px");
+    document.documentElement.style.setProperty("--row-pad-x",padX+"px");
+    document.documentElement.style.setProperty("--row-gap",gap+"px");
+  }
+  densitySlider.addEventListener("input",()=>applyDensity(Number(densitySlider.value)));
+  applyDensity(35);
+
+  // ---- SORT ----
+  function setSortKey(key){
+    if(state.sortKey===key) state.sortDir=state.sortDir==="desc"?"asc":"desc";
+    else { state.sortKey=key; state.sortDir="desc"; }
+    updateSortHeaders();
+    render();
+  }
+
+  function sortValue(p,key){
+    switch(key){
+      case "normal": return p.normalPrice;
+      case "sell": return p.sellPrice;
+      case "disc": return p.discountRate;
+      case "qty": return p.qty||0;
+      case "other": return totalOtherStock(p);
+      default: return 0;
+    }
+  }
+
+  function totalOtherStock(p){
+    let t=0;
+    for(const[,sm] of p.storeMap) for(const[,q] of sm) t+=q;
+    return t;
+  }
+
+  function updateSortHeaders(){
+    document.querySelectorAll(".list-head span.sortable").forEach(el=>{
+      const k=el.dataset.sort;
+      const ind=el.querySelector(".arrow-ind");
+      if(k===state.sortKey){
+        el.classList.add("active");
+        if(ind) ind.textContent=state.sortDir==="asc"?"↑":"↓";
+      }else{
+        el.classList.remove("active");
+        if(ind) ind.textContent="↕";
+      }
+    });
+  }
+
+  // ---- FILTERING + RENDER ----
+  function getFilteredProducts(){
+    const q=(document.getElementById("searchInput").value||"").toLowerCase().trim();
+    const onlyAvail=document.getElementById("onlyAvailable").checked;
+    const crit=getCriteria();
+    const arr=[];
+    for(const[k,p] of state.products){
+      if(q){
+        const hay=(p.brand+" "+p.product+" "+p.style+" "+p.color).toLowerCase();
+        if(!hay.includes(q)) continue;
+      }
+      if(state.selBrands.size>0&&!state.selBrands.has(p.brand)) continue;
+      if(state.selCatMajors.size>0&&!state.selCatMajors.has(p.catMajor)) continue;
+      if(state.selCatMids.size>0&&!state.selCatMids.has(p.catMid)) continue;
+      if(state.selCatSubs.size>0&&!state.selCatSubs.has(p.catSub)) continue;
+      if(onlyAvail&&!productHasAvailable(p,crit)) continue;
+      // 내 매장 총재고 = 0 인 상품 자동 제외
+      if(state.myStock.size>0){
+        const myStockMap=state.myStock.get(k);
+        if(!myStockMap) continue;
+        const totalMyStock=[...myStockMap.values()].reduce((s,v)=>s+v,0);
+        if(totalMyStock===0) continue;
+      }
+      arr.push({k,p});
+    }
+    if(state.sortKey){
+      arr.sort((a,b)=>{
+        const va=sortValue(a.p,state.sortKey), vb=sortValue(b.p,state.sortKey);
+        return state.sortDir==="desc"?vb-va:va-vb;
+      });
+    }
+    return arr;
+  }
+
+  function render(){
+    const wrap=document.getElementById("gridWrap");
+    const crit=getCriteria();
+    if(!state.dataLoaded){
+      wrap.innerHTML="<div class='empty-state'><b>데이터를 불러오는 중입니다.</b><br>잠시 기다려 주세요.</div>";
+      document.getElementById("resultCount").textContent="";
+      return;
+    }
+    if(state.isRegionalManager&&!state.selectedViewStore){
+      wrap.innerHTML="<div class='empty-state'><b>조회할 매장을 선택해 주세요.</b><br>상단 드롭다운에서 매장을 선택하면<br>해당 매장 기준으로 재고를 조회합니다.</div>";
+      document.getElementById("resultCount").textContent="";
+      return;
+    }
+    const all=getFilteredProducts();
+    document.getElementById("resultCount").textContent=all.length.toLocaleString("ko-KR")+"개";
+    const visible=all.slice(0,state.visibleCount);
+    if(all.length===0){
+      wrap.innerHTML="<div class='empty-state'><b>조건에 맞는 상품이 없습니다.</b><br>요청 기준을 조정하거나 필터를 변경해 보세요.</div>";
+      return;
+    }
+    let html="<div class='list'>";
+    html+="<div class='list-head'>"
+      +"<span class='h-brand'>브랜드</span>"
+      +"<span>상품</span>"
+      +"<span class='sortable h-normal' data-sort='normal'>정상가<span class='arrow-ind'>↕</span></span>"
+      +"<span class='sortable' data-sort='sell'>판매가<span class='arrow-ind'>↕</span></span>"
+      +"<span class='sortable' data-sort='disc'>감가율<span class='arrow-ind'>↕</span></span>"
+      +"<span class='sortable' data-sort='qty'>판매수량<span class='arrow-ind'>↕</span></span>"
+      +"<span class='sortable h-other' data-sort='other'>상대재고<span class='arrow-ind'>↕</span></span>"
+      +"<span class='h-wh'>창고재고</span>"
+      +"<span></span>"
+      +"</div>";
+    for(const{k,p} of visible){
+      const isOpen=state.openKey===k;
+      const inCart=[...state.cart.values()].filter(c=>key2(c.style,c.color)===k);
+      const cartTotal=inCart.reduce((s,c)=>s+c.qty,0);
+      const discPct=Math.round(p.discountRate*100);
+      const hasDisc=discPct>0;
+      const totalOther=totalOtherStock(p);
+      let rowHtml="<div class='row"+(isOpen?" open":"")+"' data-key='"+escHtml(k)+"'>"
+        +"<div class='brand'>"+escHtml(p.brand)+"</div>"
+        +"<div class='col-name'>"
+          +"<div class='pname'>"+escHtml(p.product)+(cartTotal>0?"<span class='cart-badge'>담김 "+cartTotal+"</span>":"")+"</div>"
+          +"<div class='style-color'>"+escHtml(p.style)+(p.color?" · "+escHtml(p.color):"")+"</div>"
+        +"</div>"
+        +"<div class='col-normal"+(hasDisc?" has-discount":"")+"'>"+fmtWon(p.normalPrice)+"</div>"
+        +"<div class='col-sell'>"+fmtWon(p.sellPrice)+"</div>"
+        +"<div class='col-disc"+(hasDisc?" has-discount":"")+"'>"+(hasDisc?discPct+"%":"-")+"</div>"
+        +"<div class='col-stat'>"+(p.qty!=null?p.qty.toLocaleString("ko-KR"):"-")+"<small>족</small></div>"
+        +"<div class='col-stat other'>"+totalOther.toLocaleString("ko-KR")+"<small>족</small></div>"
+        +"<div class='col-stat wh'>"+(state.warehouseHasData?(()=>{let t=0;p.allSizes.forEach(sz=>{t+=state.warehouseMap.get(key3(p.style,p.color,sz))||0;});return t>0?t.toLocaleString("ko-KR")+"<small>족</small>":"-";})():"-")+"</div>"
+        +"<div class='arrow'>›</div>"
+        +"</div>";
+      if(isOpen){
+        rowHtml+=buildPanel(k,p,crit);
+      }
+      html+="<div class='item'>"+rowHtml+"</div>";
+    }
+    html+="</div>";
+    if(visible.length<all.length){
+      html+="<button class='more-btn' id='moreBtn'>더 보기 ("+(all.length-visible.length).toLocaleString("ko-KR")+"개 남음)</button>";
+    }
+    wrap.innerHTML=html;
+
+    // Sort header events
+    wrap.querySelectorAll(".sortable[data-sort]").forEach(el=>{
+      el.addEventListener("click",()=>setSortKey(el.dataset.sort));
+    });
+    updateSortHeaders();
+
+    // Row click
+    wrap.querySelectorAll(".row[data-key]").forEach(el=>{
+      el.addEventListener("click",()=>{
+        const k2=el.dataset.key;
+        if(state.openKey===k2) state.openKey=null;
+        else state.openKey=k2;
+        render();
+        if(state.openKey) el.scrollIntoView({behavior:"smooth",block:"nearest"});
+      });
+    });
+
+    // Close panel button
+    wrap.querySelectorAll(".close-panel").forEach(el=>{
+      el.addEventListener("click",()=>{ state.openKey=null; render(); });
+    });
+
+    // Size chips
+    wrap.querySelectorAll(".size-chip[data-store][data-size]").forEach(chip=>{
+      chip.addEventListener("click",e=>{
+        e.stopPropagation();
+        if(chip.classList.contains("dim-chip")||chip.classList.contains("shaded-chip")) return; // 기준 미충족/안전재고 사이즈 클릭 차단
+        const k2=chip.dataset.pkey;
+        const store=chip.dataset.store;
+        const size=chip.dataset.size;
+        const p=state.products.get(k2);
+        if(!p) return;
+        const ck=key3(k2,store,size);
+        if(state.cart.has(ck)){
+          // 이미 담긴 경우 → 수량 1 증가 (최대 99)
+          const item=state.cart.get(ck);
+          item.qty=Math.min(item.qty+1,99);
+          state.cart.set(ck,item);
+        }else{
+          const avail=p.storeMap.has(store)?p.storeMap.get(store).get(size)||0:0;
+          state.cart.set(ck,{supplyStore:store,brand:p.brand,product:p.product,style:p.style,color:p.color,size,qty:1,p,avail});
+        }
+        updateCartFab();
+        render();
+      });
+    });
+
+    // More btn
+    const moreBtn=document.getElementById("moreBtn");
+    if(moreBtn){
+      moreBtn.addEventListener("click",()=>{ state.visibleCount+=60; render(); });
+    }
+  }
+
+  function buildPanel(k,p,crit){
+    const myStockMap=state.myStock.get(k)||new Map();
+    const allSizes=new Set([...p.allSizes,...myStockMap.keys()]);
+    const sortedSizes=[...allSizes].sort(sizeCompare);
+
+    // My store reference
+    const myAvailMap=state.myAvail.get(k)||new Map();
+    let myHtml="<div class='my-store-ref'><div class='my-store-head'><span class='my-store-tag'>내 매장</span>"+escHtml(state.myStore)
+      +(p.qty!=null?"<span class='my-store-sales'><b>"+p.qty.toLocaleString("ko-KR")+"족</b> 판매</span>":"")
+      +"</div><div class='sizes'>";
+    for(const sz of sortedSizes){
+      const q=myStockMap.get(sz)||0;
+      const avail=myAvailMap.get(sz)||0;
+      const isShaded=avail<=0; // 안전재고 차감 후 가용수량 없으면 음영
+      myHtml+="<div class='size-chip ref-chip"+(isShaded?" shaded-chip":"")+"'><span class='sz'>"+escHtml(sz)+"</span><span class='qty'>"+q+"족</span></div>";
+    }
+    myHtml+="</div></div>";
+
+    // Other stores — p.allSizes 기준으로 전체 사이즈 표시
+    // 재고=0 또는 가용=0 → 음영(요청불가), 기준 미충족 → dim, 선택됨 → selected
+    const stores=[...p.stockMap.keys()].sort((a,b)=>a.localeCompare(b,"ko"));
+    let storeHtml="";
+    for(const store of stores){
+      const stockSzMap=p.stockMap.get(store)||new Map();
+      const availSzMap=p.storeMap.get(store)||new Map();
+      const total=[...availSzMap.values()].reduce((s,v)=>s+v,0);
+      let chipsHtml="";
+      for(const sz of sortedSizes){ // p.allSizes 기준 전체 사이즈 순서
+        const stock=stockSzMap.get(sz)||0;
+        const avail=availSzMap.get(sz)||0;
+        const ck=key3(k,store,sz);
+        const isSel=state.cart.has(ck);
+        const cartQty=isSel?state.cart.get(ck).qty:0;
+        const passes=passesProductCriteria(p,store,sz,crit);
+        // 우선순위: 선택됨 > 재고없음(음영) > 가용없음(음영) > 기준미충족(dim) > 정상
+        let cls="size-chip";
+        if(isSel) cls+=" selected";
+        else if(stock<=0) cls+=" shaded-chip zero-stock";
+        else if(avail<=0) cls+=" shaded-chip";
+        else if(!passes) cls+=" dim-chip";
+        chipsHtml+="<div class='"+cls+"' data-pkey='"+escHtml(k)+"' data-store='"+escHtml(store)+"' data-size='"+escHtml(sz)+"'>"
+          +(isSel?"<span class='chip-check'>"+cartQty+"</span>":"")
+          +"<span class='sz'>"+escHtml(sz)+"</span>"
+          +"<span class='qty'>"+(stock>0?stock+"족":"—")+"</span>"
+          +"</div>";
+      }
+      if(!chipsHtml) continue;
+      storeHtml+="<div class='store-row'>"
+        +"<div class='sname'>"+escHtml(store)+"<span class='stotal'><i>가용 "+total+"족</i></span></div>"
+        +"<div class='sizes'>"+chipsHtml+"</div>"
+        +"</div>";
+    }
+
+    return "<div class='panel'>"
+      +"<div class='hint'>사이즈 칩을 클릭하면 요청 목록에 담깁니다</div>"
+      +myHtml
+      +(storeHtml||"<div style='font-size:12.5px;color:var(--sub);padding:10px 0'>요청 가능한 재고가 없습니다</div>")
+      +"<button class='close-panel'>닫기</button>"
+      +"</div>";
+  }
+
+  function escHtml(s){
+    return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  // ---- CART ----
+  function updateCartFab(){
+    const cnt=state.cart.size;
+    document.getElementById("cartBadge").textContent=cnt;
+    document.getElementById("submitBtn").disabled=cnt===0;
+  }
+
+  function renderDrawer(){
+    const body=document.getElementById("drawerBody");
+    if(state.cart.size===0){
+      body.innerHTML="<div class='cart-empty'>요청 목록이 비어 있습니다.<br>상품을 클릭해 사이즈를 선택하세요.</div>";
+      return;
+    }
+    const byStore=new Map();
+    for(const[ck,c] of state.cart){
+      if(!byStore.has(c.supplyStore)) byStore.set(c.supplyStore,[]);
+      byStore.get(c.supplyStore).push({ck,...c});
+    }
+    let html="";
+    for(const[store,items] of byStore){
+      html+="<div class='cart-group'><div class='g-title'>📦 "+escHtml(store)+"</div>";
+      for(const c of items){
+        html+="<div class='cart-item'>"
+          +"<div class='ci-info'>"
+            +"<div class='ci-name'>"+escHtml(c.product)+"</div>"
+            +"<div class='ci-sub'>"+escHtml(c.brand)+" · "+escHtml(c.style)+(c.color?" · "+escHtml(c.color):"")+" · "+escHtml(c.size)+"</div>"
+          +"</div>"
+          +"<div class='stepper'>"
+            +"<button data-ck='"+escHtml(c.ck)+"' data-act='minus'>−</button>"
+            +"<span>"+c.qty+"</span>"
+            +"<button data-ck='"+escHtml(c.ck)+"' data-act='plus'>+</button>"
+          +"</div>"
+          +"<button class='ci-remove' data-ck='"+escHtml(c.ck)+"'>✕</button>"
+          +"</div>";
+      }
+      html+="</div>";
+    }
+    body.innerHTML=html;
+
+    body.querySelectorAll(".stepper button").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const ck=btn.dataset.ck;
+        const act=btn.dataset.act;
+        const c=state.cart.get(ck);
+        if(!c) return;
+        if(act==="plus") c.qty=Math.min(c.qty+1,99);
+        else c.qty=Math.max(1,c.qty-1);
+        renderDrawer();
+      });
+    });
+    body.querySelectorAll(".ci-remove").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        state.cart.delete(btn.dataset.ck);
+        updateCartFab();
+        renderDrawer();
+        render();
+      });
+    });
+  }
+
+  document.getElementById("cartFab").addEventListener("click",()=>{
+    document.getElementById("drawer").classList.add("show");
+    document.getElementById("drawerBackdrop").classList.add("show");
+    renderDrawer();
+  });
+  document.getElementById("drawerClose").addEventListener("click",closeDrawer);
+  document.getElementById("drawerBackdrop").addEventListener("click",closeDrawer);
+  function closeDrawer(){
+    document.getElementById("drawer").classList.remove("show");
+    document.getElementById("drawerBackdrop").classList.remove("show");
+  }
+
+  document.getElementById("clearCart").addEventListener("click",()=>{
+    state.cart.clear();
+    updateCartFab();
+    renderDrawer();
+    render();
+  });
+
+  // ---- SUBMIT REQUEST ----
+  document.getElementById("submitBtn").addEventListener("click",()=>{
+    if(state.cart.size===0) return;
+    const items=[...state.cart.values()];
+    document.getElementById("submitBtn").disabled=true;
+    document.getElementById("submitBtn").textContent="제출 중...";
+
+    if(typeof google==="undefined"||!google.script||!google.script.run){
+      showToast("Apps Script 외부 환경 — 제출 미지원",  "error");
+      document.getElementById("submitBtn").disabled=false;
+      document.getElementById("submitBtn").textContent="요청 제출";
+      return;
+    }
+
+    // Submit each item one by one
+    let pending=items.length, successCount=0;
+    const failedItems=[];
+    const done=()=>{
+      if(pending>0) return;
+      document.getElementById("submitBtn").disabled=false;
+      document.getElementById("submitBtn").textContent="요청 제출";
+      if(failedItems.length===0){
+        showToast("요청 완료 ("+successCount+"건)","ok");
+        state.cart.clear();
+        updateCartFab();
+        renderDrawer();
+        closeDrawer();
+        render();
+      } else {
+        // 선점 실패한 항목은 카트에서 제거 + 화면 갱신
+        failedItems.forEach(f=>{
+          const ck=key3(key2(f.c.style,f.c.color),f.c.supplyStore,f.c.size);
+          state.cart.delete(ck);
+        });
+        // 실패 내역 toast
+        const msg=failedItems.map(f=>
+          f.c.supplyStore.split(" ").pop()+" "+f.c.size+(f.avail!=null?"(가용"+f.avail+"족)":"")
+        ).join(", ");
+        showToast("⚠ "+failedItems.length+"건 선점됨 — 카트 자동 제거: "+msg,"error");
+        updateCartFab();
+        renderDrawer();
+        render();
+        // 즉시 가용재고 갱신 (선점된 수량 반영)
+        pollAvailable();
+      }
+    };
+    for(const c of items){
+      google.script.run
+        .withSuccessHandler(res=>{
+          pending--;
+          if(res&&res.ok) successCount++;
+          else failedItems.push({c, reason:res?.reason||"", avail:res?.available??null});
+          done();
+        })
+        .withFailureHandler(()=>{
+          pending--;
+          failedItems.push({c, reason:"서버 오류", avail:null});
+          done();
+        })
+        .requestTransfer({
+          supplyStore: c.supplyStore,
+          brand: c.brand,
+          product: c.product,
+          style: c.style,
+          color: c.color,
+          size: c.size,
+          qty: c.qty
+        });
+    }
+  });
+
+  // ---- RESET CRITERIA ----
+  document.getElementById("resetCriteria").addEventListener("click",()=>{
+    document.getElementById("c1val").value="45";
+    document.getElementById("c1op").value="이상";
+    document.getElementById("c2val").value="1";
+    document.getElementById("c2op").value="이상";
+    document.getElementById("c4val").value="3";
+    document.getElementById("c4op").value="미만";
+    document.getElementById("c5val").value="20";
+    document.getElementById("c5op").value="이하";
+    document.getElementById("c6val").value="5";
+    document.getElementById("c6op").value="이상";
+    render();
+  });
+
+  // Criteria change → re-render + "전체" 선택 시 전체 초기화
+  const CRIT_IDS=["c1val","c1op","c2val","c2op","c4val","c4op","c5val","c5op","c6val","c6op"];
+  const OP_IDS=["c1op","c2op","c4op","c5op","c6op"];
+  function resetAllCriteria(){
+    document.getElementById("c1val").value="0";
+    document.getElementById("c1op").value="전체";
+    document.getElementById("c2val").value="0";
+    document.getElementById("c2op").value="전체";
+    document.getElementById("c4val").value="0";
+    document.getElementById("c4op").value="전체";
+    document.getElementById("c5val").value="100"; // 감가율은 100%로
+    document.getElementById("c5op").value="전체";
+    document.getElementById("c6val").value="0";
+    document.getElementById("c6op").value="전체";
+  }
+  CRIT_IDS.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener("change",()=>{
+      // op 드롭다운에서 "전체" 선택 시 → 전체 기준 초기화
+      if(OP_IDS.includes(id) && el.value==="전체"){
+        resetAllCriteria();
+      }
+      render();
+    });
+    el.addEventListener("input",()=>render());
+  });
+
+  document.getElementById("searchInput").addEventListener("input",()=>{ state.visibleCount=60; render(); });
+  document.getElementById("onlyAvailable").addEventListener("change",()=>{ state.visibleCount=60; render(); });
+
+  // Reload btn
+  document.getElementById("reloadBtn").addEventListener("click",()=>{
+    state.cart.clear();
+    updateCartFab();
+    state.openKey=null;
+    state.selBrands.clear();
+    state.selCatMajors.clear();
+    state.selCatMids.clear();
+    state.selCatSubs.clear();
+    MS_CONFIG.forEach(cfg=>refreshMsBtn(cfg));
+    loadData();
+  });
+
+  // ---- 지역장 매장 선택 ----
+  document.getElementById("storeSelector").addEventListener("change",function(){
+    const store=this.value;
+    if(!store) return;
+    state.selectedViewStore=store;
+    state.myStore=store;
+    this.classList.add("selected");
+    document.getElementById("rmHint").textContent=store+" 기준으로 조회 중 · 사이즈 클릭 시 타 매장에 요청";
+
+    // allRows를 내 매장 / 타 매장으로 분리
+    const myRows=state.allRows.filter(r=>String(r.store||"").trim()===store);
+    const otherRows=state.allRows.filter(r=>String(r.store||"").trim()!==store);
+
+    // 카트 초기화 (매장 전환 시 이전 요청 무효)
+    state.cart.clear();
+    state.openKey=null;
+    state.visibleCount=60;
+    updateCartFab();
+    state.selBrands.clear();
+    state.selCatMajors.clear(); state.selCatMids.clear(); state.selCatSubs.clear();
+
+    applyInventoryRows_(myRows, otherRows);
+  });
+
+  // ---- INIT ----
+  updateCartFab();
+  render(); // show loading state
+  loadData();
+
+})();
+</script>
+</body>
+</html>
